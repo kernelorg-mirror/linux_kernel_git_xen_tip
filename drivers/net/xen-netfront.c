@@ -1593,6 +1593,7 @@ static int setup_netfront(struct xenbus_device *dev, struct netfront_info *info)
 	int err;
 	struct net_device *netdev = info->netdev;
 	unsigned int feature_split_evtchn;
+	grant_ref_t gref;
 
 	info->tx_ring_ref = GRANT_INVALID_REF;
 	info->rx_ring_ref = GRANT_INVALID_REF;
@@ -1621,11 +1622,11 @@ static int setup_netfront(struct xenbus_device *dev, struct netfront_info *info)
 	SHARED_RING_INIT(txs);
 	FRONT_RING_INIT(&info->tx, txs, PAGE_SIZE);
 
-	err = xenbus_grant_ring(dev, virt_to_mfn(txs));
+	err = xenbus_grant_ring(dev, txs, 1, &gref);
 	if (err < 0)
 		goto grant_tx_ring_fail;
 
-	info->tx_ring_ref = err;
+	info->tx_ring_ref = gref;
 	rxs = (struct xen_netif_rx_sring *)get_zeroed_page(GFP_NOIO | __GFP_HIGH);
 	if (!rxs) {
 		err = -ENOMEM;
@@ -1635,10 +1636,10 @@ static int setup_netfront(struct xenbus_device *dev, struct netfront_info *info)
 	SHARED_RING_INIT(rxs);
 	FRONT_RING_INIT(&info->rx, rxs, PAGE_SIZE);
 
-	err = xenbus_grant_ring(dev, virt_to_mfn(rxs));
+	err = xenbus_grant_ring(dev, rxs, 1, &gref);
 	if (err < 0)
 		goto grant_rx_ring_fail;
-	info->rx_ring_ref = err;
+	info->rx_ring_ref = gref;
 
 	if (feature_split_evtchn)
 		err = setup_netfront_split(info);

@@ -1144,6 +1144,7 @@ static int setup_blkring(struct xenbus_device *dev,
 {
 	struct blkif_sring *sring;
 	int err;
+	grant_ref_t gref;
 
 	info->ring_ref = GRANT_INVALID_REF;
 
@@ -1155,13 +1156,13 @@ static int setup_blkring(struct xenbus_device *dev,
 	SHARED_RING_INIT(sring);
 	FRONT_RING_INIT(&info->ring, sring, PAGE_SIZE);
 
-	err = xenbus_grant_ring(dev, virt_to_mfn(info->ring.sring));
+	err = xenbus_grant_ring(dev, info->ring.sring, 1, &gref);
 	if (err < 0) {
 		free_page((unsigned long)sring);
 		info->ring.sring = NULL;
 		goto fail;
 	}
-	info->ring_ref = err;
+	info->ring_ref = gref;
 
 	err = xenbus_alloc_evtchn(dev, &info->evtchn);
 	if (err)
