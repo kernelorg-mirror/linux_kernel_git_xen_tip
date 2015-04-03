@@ -118,8 +118,6 @@ void xen_pcibk_reset_device(struct pci_dev *dev)
 #endif
 		if (pci_is_enabled(dev))
 			pci_disable_device(dev);
-
-		dev->is_busmaster = 0;
 	} else {
 		pci_read_config_word(dev, PCI_COMMAND, &cmd);
 		if (cmd & (PCI_COMMAND_INVALIDATE)) {
